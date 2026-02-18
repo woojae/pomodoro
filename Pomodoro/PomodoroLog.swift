@@ -1,40 +1,21 @@
 import Foundation
 
-struct PomodoroComment: Codable {
-    let timestamp: Date
-    let text: String
-}
-
-struct PomodoroEntry: Codable {
-    let date: Date
-    let duration: Int
-    let note: String
-    var comments: [PomodoroComment]
-    var reflection: String?
-
-    init(date: Date, duration: Int, note: String) {
-        self.date = date
-        self.duration = duration
-        self.note = note
-        self.comments = []
-    }
-}
-
 @MainActor
 final class PomodoroLog {
     static let shared = PomodoroLog()
 
     private static let defaultPath: String = {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("pomodoro-log.json").path
+            .appendingPathComponent("pomodoro.log").path
     }()
 
     private static let pathKey = "logFilePath"
 
-    var fileURL: URL {
-        let path = UserDefaults.standard.string(forKey: Self.pathKey) ?? Self.defaultPath
-        return URL(fileURLWithPath: path)
-    }
+    private let dateFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
 
     var filePath: String {
         get { UserDefaults.standard.string(forKey: Self.pathKey) ?? Self.defaultPath }
@@ -43,39 +24,20 @@ final class PomodoroLog {
 
     private init() {}
 
-    func save(_ entry: PomodoroEntry) {
-        var entries = load()
-        entries.append(entry)
-        write(entries)
+    func log(type: String, text: String) {
+        let timestamp = dateFormatter.string(from: Date())
+        let line = "\(timestamp)\t\(type)\t\(text)\n"
+        let url = URL(fileURLWithPath: filePath)
+        if let handle = try? FileHandle(forWritingTo: url) {
+            handle.seekToEndOfFile()
+            handle.write(line.data(using: .utf8)!)
+            handle.closeFile()
+        } else {
+            try? line.data(using: .utf8)?.write(to: url)
+        }
     }
 
-    func addComment(_ text: String) {
-        var entries = load()
-        guard !entries.isEmpty else { return }
-        let comment = PomodoroComment(timestamp: Date(), text: text)
-        entries[entries.count - 1].comments.append(comment)
-        write(entries)
-    }
-
-    func updateLastReflection(_ reflection: String) {
-        var entries = load()
-        guard !entries.isEmpty else { return }
-        entries[entries.count - 1].reflection = reflection
-        write(entries)
-    }
-
-    func load() -> [PomodoroEntry] {
-        guard let data = try? Data(contentsOf: fileURL) else { return [] }
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode([PomodoroEntry].self, from: data)) ?? []
-    }
-
-    private func write(_ entries: [PomodoroEntry]) {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        guard let data = try? encoder.encode(entries) else { return }
-        try? data.write(to: fileURL, options: .atomic)
-    }
+    func start(_ task: String) { log(type: "start", text: task) }
+    func note(_ text: String)  { log(type: "note", text: text) }
+    func done(_ text: String)  { log(type: "done", text: text) }
 }
