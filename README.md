@@ -17,13 +17,18 @@ A minimal Pomodoro timer that lives in the macOS menu bar. There are many of the
 - Configurable log file location
 - No dock icon — lives entirely in the menu bar
 
-## Requirements
+## Install
 
-- macOS 14+
-- Xcode (with command line tools)
-- [xcodegen](https://github.com/yonaskolb/XcodeGen)
+**Requires macOS 14+**
 
-## Build
+1. Download `Pomodoro-v1.0.zip` from the [latest release](https://github.com/woojae/pomodoro/releases/latest)
+2. Unzip and drag `Pomodoro.app` to `/Applications`
+3. Since the app isn't notarized, right-click the app and select **Open** the first time to bypass Gatekeeper
+4. To start on login: **System Settings > General > Login Items > add Pomodoro.app**
+
+## Build from Source
+
+If you'd prefer to build it yourself:
 
 ```bash
 brew install xcodegen
@@ -33,21 +38,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
   -scheme Pomodoro \
   -configuration Release \
   build
-```
-
-## Install
-
-```bash
 cp -r ~/Library/Developer/Xcode/DerivedData/Pomodoro-*/Build/Products/Release/Pomodoro.app /Applications/
 ```
-
-Launch from Spotlight or:
-
-```bash
-open /Applications/Pomodoro.app
-```
-
-To start on login: **System Settings > General > Login Items > add Pomodoro.app**
 
 ## Log Format
 
