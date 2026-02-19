@@ -5,6 +5,34 @@ enum Tab {
     case timer, settings
 }
 
+// MARK: - Theme
+
+private enum Theme {
+    // Background gradient
+    static let bgTop = Color(red: 0.78, green: 0.22, blue: 0.18)
+    static let bgBottom = Color(red: 0.62, green: 0.15, blue: 0.13)
+    static let toolbarBg = Color.black.opacity(0.15)
+
+    // Foreground
+    static let primaryText = Color.white
+    static let secondaryText = Color.white.opacity(0.70)
+    static let dimText = Color.white.opacity(0.45)
+
+    // Accents
+    static let warmGreen = Color(red: 0.40, green: 0.85, blue: 0.55)
+    static let warmBlue = Color(red: 0.55, green: 0.78, blue: 1.0)
+    static let warmOrange = Color(red: 1.0, green: 0.75, blue: 0.35)
+    static let warmGray = Color.white.opacity(0.6)
+
+    // Elements
+    static let ringTrack = Color.white.opacity(0.15)
+    static let cardBg = Color.white.opacity(0.10)
+    static let buttonBg = Color.white
+    static let buttonText = Color(red: 0.72, green: 0.18, blue: 0.15)
+}
+
+// MARK: - Main View
+
 struct ContentView: View {
     @Bindable var model: TimerModel
     @State private var reflection: String = ""
@@ -13,7 +41,7 @@ struct ContentView: View {
     @State private var selectedTab: Tab = .timer
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             switch selectedTab {
             case .timer:
                 if model.awaitingReflection {
@@ -25,60 +53,138 @@ struct ContentView: View {
                 settingsView
             }
 
-            Divider()
-
-            HStack {
-                Button {
-                    selectedTab = .timer
-                } label: {
-                    Image(systemName: "timer")
-                        .foregroundStyle(selectedTab == .timer ? .primary : .secondary)
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    selectedTab = .settings
-                } label: {
-                    Image(systemName: "gear")
-                        .foregroundStyle(selectedTab == .settings ? .primary : .secondary)
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-
-                Button("Quit") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .font(.caption)
-            }
+            toolbar
         }
-        .padding(20)
-        .frame(width: 280)
+        .frame(width: 300)
+        .background(
+            LinearGradient(
+                colors: [Theme.bgTop, Theme.bgBottom],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+
+    // MARK: - Toolbar
+
+    private var toolbar: some View {
+        HStack(spacing: 2) {
+            toolbarButton(icon: "timer", isActive: selectedTab == .timer) {
+                selectedTab = .timer
+            }
+            toolbarButton(icon: "gear", isActive: selectedTab == .settings) {
+                selectedTab = .settings
+            }
+
+            Spacer()
+
+            toolbarButton(icon: "xmark.circle", isActive: false) {
+                NSApplication.shared.terminate(nil)
+            }
+            .help("Quit Pomodoro")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Theme.toolbarBg)
+    }
+
+    private func toolbarButton(icon: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isActive ? Theme.primaryText : Theme.dimText)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Timer View
 
     private var timerView: some View {
-        VStack(spacing: 12) {
-            Text(model.phase.rawValue)
-                .font(.headline)
-                .foregroundStyle(phaseColor)
-
+        VStack(spacing: 20) {
             if model.phase == .idle {
-                TextField("What will you work on?", text: $model.currentTask)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { startWithLog() }
+                idleView
+            } else {
+                activeTimerView
+            }
+        }
+        .padding(24)
+    }
+
+    private var idleView: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .stroke(Theme.ringTrack, lineWidth: 6)
+                    .frame(width: 140, height: 140)
+
+                VStack(spacing: 4) {
+                    Text("25:00")
+                        .font(.system(size: 36, weight: .light, design: .rounded))
+                        .foregroundStyle(Theme.secondaryText)
+
+                    Text("READY")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(Theme.dimText)
+                        .tracking(1.5)
+                }
             }
 
-            Text(model.displayTime)
-                .font(.system(size: 48, weight: .medium, design: .monospaced))
+            VStack(spacing: 12) {
+                TextField("What will you work on?", text: $model.currentTask)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.primaryText)
+                    .padding(10)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .onSubmit { startWithLog() }
 
-            if model.phase != .idle, !model.currentTask.isEmpty {
+                actionButton(
+                    "Start Focus",
+                    enabled: !model.currentTask.trimmingCharacters(in: .whitespaces).isEmpty
+                ) {
+                    startWithLog()
+                }
+            }
+        }
+    }
+
+    private var activeTimerView: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .stroke(Theme.ringTrack, lineWidth: 6)
+                    .frame(width: 140, height: 140)
+
+                Circle()
+                    .trim(from: 0, to: model.progress)
+                    .stroke(
+                        phaseColor,
+                        style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                    )
+                    .frame(width: 140, height: 140)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: model.progress)
+
+                VStack(spacing: 4) {
+                    Text(model.displayTime)
+                        .font(.system(size: 36, weight: .light, design: .rounded))
+                        .foregroundStyle(Theme.primaryText)
+                        .contentTransition(.numericText())
+
+                    Text(model.phase.rawValue.uppercased())
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(phaseAccentColor)
+                        .tracking(1.5)
+                }
+            }
+
+            if !model.currentTask.isEmpty {
                 Text(model.currentTask)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Theme.secondaryText)
                     .lineLimit(1)
             }
 
@@ -86,26 +192,19 @@ struct ContentView: View {
                 noteInputView
             }
 
-            HStack(spacing: 12) {
-                switch model.phase {
-                case .idle:
-                    Button("Start") { startWithLog() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.green)
-                        .disabled(model.currentTask.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                case .working, .onBreak:
-                    if model.isPaused {
-                        Button("Resume") { model.resume() }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.blue)
-                    } else {
-                        Button("Pause") { model.pause() }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.orange)
+            HStack(spacing: 10) {
+                if model.isPaused {
+                    pillButton("Resume", icon: "play.fill", color: Theme.warmBlue) {
+                        model.resume()
                     }
-                    Button("Reset") { model.reset() }
-                        .buttonStyle(.bordered)
+                } else {
+                    pillButton("Pause", icon: "pause.fill", color: Theme.warmOrange) {
+                        model.pause()
+                    }
+                }
+
+                pillButton("Reset", icon: "arrow.counterclockwise", color: Theme.warmGray) {
+                    model.reset()
                 }
             }
         }
@@ -116,28 +215,56 @@ struct ContentView: View {
     private var noteInputView: some View {
         VStack(spacing: 6) {
             if !recentNotes.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(recentNotes, id: \.self) { n in
-                        Text("- \(n)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                notesListView(recentNotes)
             }
 
             HStack(spacing: 8) {
                 TextField("Add a note...", text: $comment)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.caption)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.primaryText)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                     .onSubmit { addNote() }
 
-                Button("Add") { addNote() }
-                    .font(.caption)
-                    .disabled(comment.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button {
+                    addNote()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(
+                            comment.trimmingCharacters(in: .whitespaces).isEmpty
+                                ? Theme.dimText
+                                : Theme.primaryText
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(comment.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
+    }
+
+    private func notesListView(_ notes: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(notes.enumerated()), id: \.offset) { _, note in
+                HStack(alignment: .top, spacing: 6) {
+                    Circle()
+                        .fill(Color.white.opacity(0.5))
+                        .frame(width: 5, height: 5)
+                        .padding(.top, 5)
+                    Text(note)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.secondaryText)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(Theme.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
     private func addNote() {
@@ -151,71 +278,156 @@ struct ContentView: View {
     // MARK: - Reflection View
 
     private var reflectionView: some View {
-        VStack(spacing: 12) {
-            Text("Time's up!")
-                .font(.headline)
-                .foregroundStyle(.red)
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.2), lineWidth: 6)
+                    .frame(width: 140, height: 140)
+
+                Circle()
+                    .trim(from: 0, to: 1)
+                    .stroke(Color.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .frame(width: 140, height: 140)
+                    .rotationEffect(.degrees(-90))
+
+                VStack(spacing: 4) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(Theme.primaryText)
+
+                    Text("DONE")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(Theme.primaryText)
+                        .tracking(1.5)
+                }
+            }
 
             if !model.currentTask.isEmpty {
                 Text(model.currentTask)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Theme.secondaryText)
             }
 
             if !recentNotes.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(recentNotes, id: \.self) { n in
-                        Text("- \(n)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                notesListView(recentNotes)
             }
 
-            TextField("What did you accomplish?", text: $reflection)
-                .textFieldStyle(.roundedBorder)
-                .onSubmit { saveReflectionAndStartBreak() }
+            VStack(spacing: 10) {
+                TextField("What did you accomplish?", text: $reflection)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.primaryText)
+                    .padding(10)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .onSubmit { saveReflectionAndStartBreak() }
 
-            HStack(spacing: 12) {
-                Button("Save") { saveReflectionAndStartBreak() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(reflection.trimmingCharacters(in: .whitespaces).isEmpty)
+                HStack(spacing: 10) {
+                    actionButton(
+                        "Save & Break",
+                        enabled: !reflection.trimmingCharacters(in: .whitespaces).isEmpty
+                    ) {
+                        saveReflectionAndStartBreak()
+                    }
 
-                Button("Skip") {
-                    reflection = ""
-                    recentNotes = []
-                    model.startBreak()
+                    Button {
+                        reflection = ""
+                        recentNotes = []
+                        model.startBreak()
+                    } label: {
+                        Text("Skip")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundStyle(Theme.secondaryText)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.bordered)
             }
         }
+        .padding(24)
     }
 
     // MARK: - Settings View
 
     private var settingsView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Settings")
-                .font(.headline)
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .foregroundStyle(Theme.primaryText)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Log file location")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("LOG FILE")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.dimText)
+                    .tracking(1)
 
                 Text(PomodoroLog.shared.filePath)
                     .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(Theme.secondaryText)
                     .lineLimit(2)
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(Theme.cardBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                Button("Change...") { chooseLogFile() }
-                    .font(.caption)
+                Button {
+                    chooseLogFile()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                            .font(.system(size: 11))
+                        Text("Change Location")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundStyle(Theme.primaryText)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(24)
+    }
+
+    // MARK: - Reusable Components
+
+    private func actionButton(_ title: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(enabled ? Theme.buttonText : Theme.dimText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(enabled ? Theme.buttonBg : Color.white.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+    }
+
+    private func pillButton(_ title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 10, weight: .bold))
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+            }
+            .foregroundStyle(Theme.primaryText)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 9)
+            .background(Color.white.opacity(0.2))
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.3), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Actions
@@ -250,9 +462,17 @@ struct ContentView: View {
 
     private var phaseColor: Color {
         switch model.phase {
-        case .idle: return .secondary
-        case .working: return .red
-        case .onBreak: return .green
+        case .idle: return Theme.dimText
+        case .working: return Theme.warmGreen
+        case .onBreak: return Theme.warmGreen
+        }
+    }
+
+    private var phaseAccentColor: Color {
+        switch model.phase {
+        case .idle: return Theme.dimText
+        case .working: return Theme.warmOrange
+        case .onBreak: return Theme.warmGreen
         }
     }
 }

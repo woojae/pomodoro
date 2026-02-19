@@ -20,6 +20,12 @@ final class TimerModel {
     private static let workDuration = 25 * 60
     private static let breakDuration = 5 * 60
 
+    var progress: Double {
+        let total = phase == .onBreak ? Double(Self.breakDuration) : Double(Self.workDuration)
+        guard total > 0 else { return 0 }
+        return 1.0 - Double(remainingSeconds) / total
+    }
+
     var displayTime: String {
         let m = remainingSeconds / 60
         let s = remainingSeconds % 60
