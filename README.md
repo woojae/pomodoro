@@ -1,6 +1,8 @@
 # Pomodoro
 
-A minimal Pomodoro timer that lives in the macOS menu bar.
+A minimal Pomodoro timer that lives in the macOS menu bar. There are many of these little Pomodoro apps on the internet, but most of them are scammy adware, or there's a small fee with bloated premium features. This one is free and designed exactly for my minimalist needs.
+
+![Pomodoro](screenshot.png)
 
 ## Features
 
