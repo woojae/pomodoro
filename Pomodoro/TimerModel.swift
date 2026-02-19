@@ -17,11 +17,21 @@ final class TimerModel {
 
     private var timer: Timer?
 
-    private static let workDuration = 25 * 60
-    private static let breakDuration = 5 * 60
+    static var workMinutes: Int {
+        get { let v = UserDefaults.standard.integer(forKey: "workMinutes"); return v > 0 ? v : 25 }
+        set { UserDefaults.standard.set(newValue, forKey: "workMinutes") }
+    }
+
+    static var breakMinutes: Int {
+        get { let v = UserDefaults.standard.integer(forKey: "breakMinutes"); return v > 0 ? v : 5 }
+        set { UserDefaults.standard.set(newValue, forKey: "breakMinutes") }
+    }
+
+    private var workDuration: Int { Self.workMinutes * 60 }
+    private var breakDuration: Int { Self.breakMinutes * 60 }
 
     var progress: Double {
-        let total = phase == .onBreak ? Double(Self.breakDuration) : Double(Self.workDuration)
+        let total = phase == .onBreak ? Double(breakDuration) : Double(workDuration)
         guard total > 0 else { return 0 }
         return 1.0 - Double(remainingSeconds) / total
     }
@@ -45,7 +55,7 @@ final class TimerModel {
 
     func start() {
         phase = .working
-        remainingSeconds = Self.workDuration
+        remainingSeconds = workDuration
         isPaused = false
         startTimer()
     }
@@ -63,14 +73,14 @@ final class TimerModel {
     func startBreak() {
         awaitingReflection = false
         phase = .onBreak
-        remainingSeconds = Self.breakDuration
+        remainingSeconds = breakDuration
         startTimer()
     }
 
     func reset() {
         stopTimer()
         phase = .idle
-        remainingSeconds = Self.workDuration
+        remainingSeconds = workDuration
         isPaused = false
         currentTask = ""
         awaitingReflection = false
@@ -105,7 +115,7 @@ final class TimerModel {
             case .onBreak:
                 onPhaseComplete?(.onBreak)
                 phase = .idle
-                remainingSeconds = Self.workDuration
+                remainingSeconds = workDuration
             case .idle:
                 break
             }

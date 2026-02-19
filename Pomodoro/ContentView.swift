@@ -120,7 +120,7 @@ struct ContentView: View {
                     .frame(width: 140, height: 140)
 
                 VStack(spacing: 4) {
-                    Text("25:00")
+                    Text(model.displayTime)
                         .font(.system(size: 36, weight: .light, design: .rounded))
                         .foregroundStyle(Theme.secondaryText)
 
@@ -135,9 +135,9 @@ struct ContentView: View {
                 TextField("What will you work on?", text: $model.currentTask)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.primaryText)
+                    .foregroundStyle(Theme.buttonText)
                     .padding(10)
-                    .background(Color.white.opacity(0.15))
+                    .background(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .onSubmit { startWithLog() }
 
@@ -222,10 +222,10 @@ struct ContentView: View {
                 TextField("Add a note...", text: $comment)
                     .textFieldStyle(.plain)
                     .font(.system(size: 11))
-                    .foregroundStyle(Theme.primaryText)
+                    .foregroundStyle(Theme.buttonText)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.15))
+                    .background(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .onSubmit { addNote() }
 
@@ -316,9 +316,9 @@ struct ContentView: View {
                 TextField("What did you accomplish?", text: $reflection)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.primaryText)
+                    .foregroundStyle(Theme.buttonText)
                     .padding(10)
-                    .background(Color.white.opacity(0.15))
+                    .background(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .onSubmit { saveReflectionAndStartBreak() }
 
@@ -359,6 +359,23 @@ struct ContentView: View {
                 .foregroundStyle(Theme.primaryText)
 
             VStack(alignment: .leading, spacing: 8) {
+                Text("TIMER")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.dimText)
+                    .tracking(1)
+
+                settingRow("Work", value: Binding(
+                    get: { TimerModel.workMinutes },
+                    set: { TimerModel.workMinutes = $0; model.reset() }
+                ), range: 1...60)
+
+                settingRow("Break", value: Binding(
+                    get: { TimerModel.breakMinutes },
+                    set: { TimerModel.breakMinutes = $0 }
+                ), range: 1...30)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
                 Text("LOG FILE")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.dimText)
@@ -394,6 +411,51 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(24)
+    }
+
+    private func settingRow(_ label: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Theme.secondaryText)
+
+            Spacer()
+
+            HStack(spacing: 10) {
+                Button {
+                    if value.wrappedValue > range.lowerBound { value.wrappedValue -= 1 }
+                } label: {
+                    Image(systemName: "minus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Theme.primaryText)
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.15))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Text("\(value.wrappedValue) min")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Theme.primaryText)
+                    .frame(width: 48)
+
+                Button {
+                    if value.wrappedValue < range.upperBound { value.wrappedValue += 1 }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Theme.primaryText)
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.15))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Theme.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     // MARK: - Reusable Components
