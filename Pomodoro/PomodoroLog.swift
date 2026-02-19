@@ -11,9 +11,10 @@ final class PomodoroLog {
 
     private static let pathKey = "logFilePath"
 
-    private let dateFormatter: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
+    private let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        f.timeZone = .current
         return f
     }()
 
