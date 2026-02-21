@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 enum Tab {
     case timer, settings
@@ -218,50 +217,63 @@ struct ContentView: View {
                 notesListView(recentNotes)
             }
 
-            HStack(spacing: 8) {
-                TextField("Add a note...", text: $comment)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 11))
+            VStack(spacing: 6) {
+                TextEditor(text: $comment)
+                    .font(.system(size: 12))
                     .foregroundStyle(Theme.buttonText)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
+                    .scrollContentBackground(.hidden)
+                    .padding(8)
+                    .frame(height: 80)
                     .background(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .onSubmit { addNote() }
 
-                Button {
-                    addNote()
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 18))
+                HStack {
+                    Spacer()
+                    Button {
+                        addNote()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 12))
+                            Text("Add Note")
+                                .font(.system(size: 11, weight: .medium))
+                        }
                         .foregroundStyle(
                             comment.trimmingCharacters(in: .whitespaces).isEmpty
                                 ? Theme.dimText
                                 : Theme.primaryText
                         )
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 10)
+                        .background(Color.white.opacity(0.15))
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(comment.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                .buttonStyle(.plain)
-                .disabled(comment.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
     }
 
     private func notesListView(_ notes: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(notes.enumerated()), id: \.offset) { _, note in
-                HStack(alignment: .top, spacing: 6) {
-                    Circle()
-                        .fill(Color.white.opacity(0.5))
-                        .frame(width: 5, height: 5)
-                        .padding(.top, 5)
-                    Text(note)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.secondaryText)
-                        .lineLimit(1)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(Array(notes.enumerated()), id: \.offset) { _, note in
+                    HStack(alignment: .top, spacing: 6) {
+                        Circle()
+                            .fill(Color.white.opacity(0.5))
+                            .frame(width: 5, height: 5)
+                            .padding(.top, 5)
+                        Text(note)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxHeight: 120)
         .padding(8)
         .background(Theme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -376,12 +388,12 @@ struct ContentView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("LOG FILE")
+                Text("LOG FOLDER")
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.dimText)
                     .tracking(1)
 
-                Text(PomodoroLog.shared.filePath)
+                Text(PomodoroLog.shared.directoryPath)
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(Theme.secondaryText)
                     .lineLimit(2)
@@ -392,7 +404,7 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Button {
-                    chooseLogFile()
+                    chooseLogFolder()
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "folder")
@@ -511,14 +523,15 @@ struct ContentView: View {
         model.startBreak()
     }
 
-    private func chooseLogFile() {
-        let panel = NSSavePanel()
-        panel.title = "Choose log file location"
-        panel.nameFieldStringValue = URL(fileURLWithPath: PomodoroLog.shared.filePath).lastPathComponent
-        panel.allowedContentTypes = [UTType(filenameExtension: "log") ?? .plainText]
-        panel.directoryURL = URL(fileURLWithPath: PomodoroLog.shared.filePath).deletingLastPathComponent()
+    private func chooseLogFolder() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose log folder"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.directoryURL = URL(fileURLWithPath: PomodoroLog.shared.directoryPath)
         if panel.runModal() == .OK, let url = panel.url {
-            PomodoroLog.shared.filePath = url.path
+            PomodoroLog.shared.directoryPath = url.path
         }
     }
 

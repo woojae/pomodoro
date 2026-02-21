@@ -13,8 +13,8 @@ A minimal Pomodoro timer that lives in the macOS menu bar. There are many of the
 - Add notes during a session
 - Reflect on what you accomplished after each session
 - macOS notification when timer completes
-- Plain text log file for easy querying
-- Configurable log file location
+- Daily markdown log files for easy reading and querying
+- Configurable log folder location
 - No dock icon — lives entirely in the menu bar
 
 ## Install
@@ -43,13 +43,38 @@ cp -r ~/Library/Developer/Xcode/DerivedData/Pomodoro-*/Build/Products/Release/Po
 
 ## Log Format
 
-Sessions are logged to `~/pomodoro.log` (configurable in Settings). Each line is tab-separated:
+Sessions are logged as daily markdown files in `~/pomodoro/` (configurable in Settings):
 
 ```
-2026-02-18 10:00:00	start	Fix login bug
-2026-02-18 10:05:32	note	Found root cause in token refresh
-2026-02-18 10:12:15	note	Also need to update tests
-2026-02-18 10:25:00	done	Rewrote auth token refresh logic
+~/pomodoro/
+├── 2026-02-17.md
+├── 2026-02-18.md
+└── 2026-02-19.md
+```
+
+Each file contains all sessions for that day:
+
+```markdown
+## 10:00 — Fix login bug
+
+### Notes
+- Found root cause in token refresh
+- Also need to update tests
+
+### Reflection
+Rewrote auth token refresh logic
+
+---
+
+## 11:30 — Write unit tests
+
+### Notes
+- Covered happy path and token expiry edge case
+
+### Reflection
+Added 12 test cases, all passing
+
+---
 ```
 
 ## Shell Helper
@@ -59,9 +84,9 @@ Add this to your `~/.zshrc` (or `~/.bashrc`):
 ```bash
 pomo() {
   case "$1" in
-    yesterday) grep "$(date -v-1d +%Y-%m-%d)" ~/pomodoro.log ;;
-    search)    grep -i "$2" ~/pomodoro.log ;;
-    *)         grep "$(date +%Y-%m-%d)" ~/pomodoro.log ;;
+    yesterday) cat ~/pomodoro/$(date -v-1d +%Y-%m-%d).md 2>/dev/null ;;
+    search)    grep -ri "$2" ~/pomodoro/ ;;
+    *)         cat ~/pomodoro/$(date +%Y-%m-%d).md 2>/dev/null ;;
   esac
 }
 ```
@@ -69,7 +94,7 @@ pomo() {
 Then `source ~/.zshrc` and use:
 
 ```bash
-pomo                    # today's entries
-pomo yesterday          # yesterday's entries
-pomo search login       # search all entries (case-insensitive)
+pomo                    # today's sessions
+pomo yesterday          # yesterday's sessions
+pomo search login       # search all sessions (case-insensitive)
 ```
