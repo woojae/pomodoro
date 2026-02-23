@@ -84,9 +84,13 @@ Add this to your `~/.zshrc` (or `~/.bashrc`):
 ```bash
 pomo() {
   case "$1" in
-    yesterday) cat ~/pomodoro/$(date -v-1d +%Y-%m-%d).md 2>/dev/null ;;
-    search)    grep -ri "$2" ~/pomodoro/ ;;
-    *)         cat ~/pomodoro/$(date +%Y-%m-%d).md 2>/dev/null ;;
+    yesterday)
+      local yd
+      yd=$(date -v-1d +%Y-%m-%d 2>/dev/null || date -d yesterday +%Y-%m-%d)
+      cat ~/pomodoro/"$yd".md 2>/dev/null
+      ;;
+    search) grep -ri "$2" ~/pomodoro/ ;;
+    *)      cat ~/pomodoro/$(date +%Y-%m-%d).md 2>/dev/null ;;
   esac
 }
 ```
