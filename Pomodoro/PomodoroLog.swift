@@ -70,13 +70,13 @@ final class PomodoroLog {
 
     func note(_ text: String) {
         if !hasWrittenNotesHeader {
-            append("### Notes\n\n")
+            append("### Notes\n")
             hasWrittenNotesHeader = true
         }
-        append("\(text)\n\n")
+        append("\(text)\n")
     }
 
     func done(_ text: String) {
-        append("### Reflection\n\n\(text)\n\n---\n")
+        append("\n### Reflection\n\(text)\n\n---\n")
     }
 }
