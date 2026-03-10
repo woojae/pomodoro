@@ -30,6 +30,8 @@ final class TimerModel {
     private var workDuration: Int { Self.workMinutes * 60 }
     private var breakDuration: Int { Self.breakMinutes * 60 }
 
+    var elapsedSeconds: Int { workDuration - remainingSeconds }
+
     var progress: Double {
         let total = phase == .onBreak ? Double(breakDuration) : Double(workDuration)
         guard total > 0 else { return 0 }

@@ -64,19 +64,23 @@ final class PomodoroLog {
         let path = todayFilePath()
         let fileExists = FileManager.default.fileExists(atPath: path)
         let prefix = fileExists ? "\n" : ""
-        append("\(prefix)## \(time) — \(task)\n\n")
+        append("\(prefix)## \(time) — \(task)\n")
         hasWrittenNotesHeader = false
     }
 
     func note(_ text: String) {
         if !hasWrittenNotesHeader {
-            append("### Notes\n")
+            append("\n### Notes\n")
             hasWrittenNotesHeader = true
         }
         append("\(text)\n")
     }
 
-    func done(_ text: String) {
-        append("\n### Reflection\n\(text)\n\n---\n")
+    func done(_ text: String, elapsedMinutes: Int) {
+        append("\n### Reflection\n\(text)\n\n**minutes: \(elapsedMinutes) **\n---\n")
+    }
+
+    func logEarlyExit(elapsedMinutes: Int) {
+        append("\n**minutes: \(elapsedMinutes) ** *(stopped early)*\n---\n")
     }
 }

@@ -203,6 +203,10 @@ struct ContentView: View {
                 }
 
                 pillButton("Reset", icon: "arrow.counterclockwise", color: Theme.warmGray) {
+                    if model.phase == .working {
+                        let elapsed = max(model.elapsedSeconds / 60, 1)
+                        PomodoroLog.shared.logEarlyExit(elapsedMinutes: elapsed)
+                    }
                     model.reset()
                 }
             }
@@ -517,7 +521,7 @@ struct ContentView: View {
     private func saveReflectionAndStartBreak() {
         let text = reflection.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
-        PomodoroLog.shared.done(text)
+        PomodoroLog.shared.done(text, elapsedMinutes: TimerModel.workMinutes)
         reflection = ""
         recentNotes = []
         model.startBreak()
