@@ -76,11 +76,21 @@ final class PomodoroLog {
         append("\(text)\n")
     }
 
-    func done(_ text: String, elapsedMinutes: Int) {
-        append("\n### Reflection\n\(text)\n\n**minutes: \(elapsedMinutes) **\n---\n")
+    /// Written the moment the work timer reaches zero, before any reflection.
+    func completed(minutes: Int) {
+        append("\n**completed: \(minutes) minutes**\n")
+    }
+
+    func done(_ text: String) {
+        append("\n### Reflection\n\(text)\n\n---\n")
+    }
+
+    /// Closes the entry when the reflection prompt is skipped.
+    func skipReflection() {
+        append("\n---\n")
     }
 
     func logEarlyExit(elapsedMinutes: Int) {
-        append("\n**minutes: \(elapsedMinutes) ** *(stopped early)*\n---\n")
+        append("\n**minutes: \(elapsedMinutes)**\n\n---\n")
     }
 }
