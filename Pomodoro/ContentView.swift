@@ -203,11 +203,7 @@ struct ContentView: View {
                 }
 
                 pillButton("Reset", icon: "arrow.counterclockwise", color: Theme.warmGray) {
-                    if model.phase == .working {
-                        let elapsed = max(model.elapsedSeconds / 60, 1)
-                        PomodoroLog.shared.logEarlyExit(elapsedMinutes: elapsed)
-                    }
-                    model.reset()
+                    abandonSession()
                 }
             }
         }
@@ -347,6 +343,7 @@ struct ContentView: View {
                     }
 
                     Button {
+                        PomodoroLog.shared.skipReflection()
                         reflection = ""
                         recentNotes = []
                         model.startBreak()
@@ -382,7 +379,7 @@ struct ContentView: View {
 
                 settingRow("Work", value: Binding(
                     get: { TimerModel.workMinutes },
-                    set: { TimerModel.workMinutes = $0; model.reset() }
+                    set: { TimerModel.workMinutes = $0; abandonSession() }
                 ), range: 1...60)
 
                 settingRow("Break", value: Binding(
@@ -521,10 +518,27 @@ struct ContentView: View {
     private func saveReflectionAndStartBreak() {
         let text = reflection.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
-        PomodoroLog.shared.done(text, elapsedMinutes: TimerModel.workMinutes)
+        PomodoroLog.shared.done(text)
         reflection = ""
         recentNotes = []
         model.startBreak()
+    }
+
+    /// Ends the current session without a break, recording how it ended.
+    /// A session cut short mid-work is logged as stopped early. A finished
+    /// session abandoned at the reflection prompt just has its entry closed.
+    private func abandonSession() {
+        if model.phase == .working {
+            if model.awaitingReflection {
+                PomodoroLog.shared.skipReflection()
+            } else {
+                let elapsed = max(model.elapsedSeconds / 60, 1)
+                PomodoroLog.shared.logEarlyExit(elapsedMinutes: elapsed)
+            }
+        }
+        reflection = ""
+        recentNotes = []
+        model.reset()
     }
 
     private func chooseLogFolder() {

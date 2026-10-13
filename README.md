@@ -31,15 +31,17 @@ A minimal Pomodoro timer that lives in the macOS menu bar. There are many of the
 If you'd prefer to build it yourself:
 
 ```bash
-brew install xcodegen
-xcodegen generate
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild \
-  -project Pomodoro.xcodeproj \
-  -scheme Pomodoro \
-  -configuration Release \
-  build
-cp -r ~/Library/Developer/Xcode/DerivedData/Pomodoro-*/Build/Products/Release/Pomodoro.app /Applications/
+make install
 ```
+
+This builds a Release binary, quits any running copy, replaces `/Applications/Pomodoro.app`, and relaunches it. Other targets:
+
+| Target          | What it does                                             |
+| --------------- | -------------------------------------------------------- |
+| `make`          | Release build into `./build`                             |
+| `make run`      | Debug build, launched from `./build` without installing  |
+| `make generate` | Regenerate the Xcode project from `project.yml` (`brew install xcodegen`) |
+| `make clean`    | Remove `./build`                                         |
 
 ## Log Format
 
@@ -61,6 +63,8 @@ Each file contains all sessions for that day:
 - Found root cause in token refresh
 - Also need to update tests
 
+**completed: 25 minutes**
+
 ### Reflection
 Rewrote auth token refresh logic
 
@@ -71,8 +75,7 @@ Rewrote auth token refresh logic
 ### Notes
 - Covered happy path and token expiry edge case
 
-### Reflection
-Added 12 test cases, all passing
+**minutes: 12**
 
 ---
 ```

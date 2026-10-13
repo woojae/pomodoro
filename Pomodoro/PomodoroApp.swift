@@ -22,6 +22,9 @@ struct PomodoroApp: App {
         _model = State(initialValue: {
             let m = TimerModel()
             m.onPhaseComplete = { phase in
+                if phase == .working {
+                    PomodoroLog.shared.completed(minutes: TimerModel.workMinutes)
+                }
                 notificationManager.sendNotification(for: phase)
             }
             return m
