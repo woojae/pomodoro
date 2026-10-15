@@ -1,8 +1,8 @@
 # Pomodoro menu bar app
 #
-#   make            Build a Release binary into ./build
+#   make            Build a Release binary into ./build.noindex (.noindex keeps Spotlight from indexing build output)
 #   make install    Build, quit the running app, copy to /Applications, relaunch
-#   make run        Build Debug and launch it from ./build (no install)
+#   make run        Build Debug and launch it from ./build.noindex (no install)
 #   make generate   Regenerate Pomodoro.xcodeproj from project.yml (needs xcodegen)
 #   make clean      Remove build output
 
@@ -10,7 +10,7 @@ SHELL      := /bin/bash
 
 APP        := Pomodoro
 PROJECT    := $(APP).xcodeproj
-BUILD_DIR  := build
+BUILD_DIR  := build.noindex
 INSTALL_TO := /Applications
 
 XCODEBUILD := xcodebuild -project $(PROJECT) -scheme $(APP) -derivedDataPath $(BUILD_DIR)

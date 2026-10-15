@@ -38,10 +38,10 @@ This builds a Release binary, quits any running copy, replaces `/Applications/Po
 
 | Target          | What it does                                             |
 | --------------- | -------------------------------------------------------- |
-| `make`          | Release build into `./build`                             |
-| `make run`      | Debug build, launched from `./build` without installing  |
+| `make`          | Release build into `./build.noindex`                     |
+| `make run`      | Debug build, launched from `./build.noindex`, no install |
 | `make generate` | Regenerate the Xcode project from `project.yml` (`brew install xcodegen`) |
-| `make clean`    | Remove `./build`                                         |
+| `make clean`    | Remove `./build.noindex`                                 |
 
 ## Log Format
 

@@ -3,6 +3,7 @@
 
 # Xcode
 build/
+build.noindex/
 DerivedData/
 *.xcuserdata
 xcuserdata/
